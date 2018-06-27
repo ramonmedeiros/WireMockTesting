@@ -7,6 +7,8 @@ import org.apache.http.entity.ContentType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import cucumber.api.DataTable;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -19,14 +21,15 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class MockTestPassos {
+public class MockTestSteps {
 
-	private final WireMockServer wireMockServer = new WireMockServer(options().dynamicPort());
+	private final WireMockServer wireMockServer = new WireMockServer(options().port(9999));
 
 	private String content, response, fileJson = "./resources/__files/request_calculator.json";
 	private JSONObject jsonRequest;
 
-	public MockTestPassos() {
+	
+	public void setup() throws InterruptedException {
 
 		// read requesting json
 		try {
@@ -38,14 +41,15 @@ public class MockTestPassos {
 
 		// start mock at :9999
 		wireMockServer.start();
-		configureFor("localhost", wireMockServer.port());
+		configureFor("localhost", 9999);
 		wireMockServer.stubFor(post(urlPathEqualTo("/api/books")).withRequestBody(equalTo(content))
 				.willReturn(aResponse().withStatus(200).withBody("61")));
+		Thread.sleep(1000);
 	}
 
 	@Given("^a operacao a ser realizada$")
 	public void a_operacao_a_ser_realizada(DataTable input) throws Throwable {
-
+		setup();
 		// get headers
 		List<String> headers = input.getGherkinRows().get(0).getCells();
 		jsonRequest = new JSONObject();
@@ -71,25 +75,23 @@ public class MockTestPassos {
 	@Then("^retornar erro caso as entradas estejam invalidas$")
 	public void retornar_erro_caso_as_entradas_estejam_invalidas() throws Throwable {
 		// do request and stop server
-		try { 
-		Request.Post("http://localhost:" + wireMockServer.port() + "/api/books")
-				.bodyString(jsonRequest.toString(), ContentType.APPLICATION_JSON).execute().returnContent().toString();
+		try {
+			Request.Post("http://localhost:9999/api/books")
+					.bodyString(jsonRequest.toString(), ContentType.APPLICATION_JSON).execute().returnContent()
+					.toString();
 		} catch (Exception e) {
 			assertEquals(HttpResponseException.class, e.getClass());
 		}
+		wireMockServer.stop();
 	}
 
 	@Then("^retornar o resultado$")
 	public void retornar_o_resultado() throws Throwable {
 		// do request and stop server
-		response = Request.Post("http://localhost:" + wireMockServer.port() + "/api/books")
+		response = Request.Post("http://localhost:9999/api/books")
 				.bodyString(jsonRequest.toString(), ContentType.APPLICATION_JSON).execute().returnContent().toString();
 		assertEquals(response, "61");
-	}
-
-	public void finalize() throws Throwable {
 		wireMockServer.stop();
-		super.finalize();
 	}
 
 }
