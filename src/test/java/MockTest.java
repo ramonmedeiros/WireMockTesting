@@ -2,7 +2,7 @@ package test.java;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -41,7 +41,7 @@ public class MockTest {
 		// start mock at :9999
 		wireMockServer.start();
 		configureFor("localhost", 9999);
-		wireMockServer.stubFor(post(urlPathEqualTo("/calculadora/calcular")).withRequestBody(equalTo(content))
+		wireMockServer.stubFor(post(urlPathEqualTo("/calculadora/calcular")).withRequestBody(equalToJson(content))
 				.willReturn(aResponse().withStatus(200).withBody("61")));
 	}
 
